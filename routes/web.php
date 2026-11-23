@@ -5,17 +5,20 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Admin\ShippingServiceController;
+use App\Http\Controllers\ProductCatalogController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Halaman Utama
+| Route Publik (Katalog Produk)
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return view('placeholder', ['title' => 'Beranda']);
-})->name('shop.index');
+Route::get('/', [ProductCatalogController::class, 'index'])
+    ->name('shop.index');
+
+Route::get('/produk/{product:slug}', [ProductCatalogController::class, 'show'])
+    ->name('shop.show');
 
 /*
 |--------------------------------------------------------------------------
@@ -57,7 +60,7 @@ Route::prefix('admin')
     ->middleware(['auth', 'role:admin'])
     ->group(function () {
 
-        Route::get('/', fn() =>
+        Route::get('/', fn () =>
             view('placeholder', [
                 'title' => 'Dashboard Admin (sementara)'
             ])
