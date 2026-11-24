@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\StockController;
@@ -48,6 +49,29 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
+
+/*
+|--------------------------------------------------------------------------
+| Customer
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:customer'])->group(function () {
+
+    // M5 - Keranjang
+
+    Route::get('/keranjang', [CartController::class, 'index'])
+        ->name('cart.index');
+
+    Route::post('/keranjang/{product}', [CartController::class, 'store'])
+        ->name('cart.store');
+
+    Route::patch('/keranjang/{product}', [CartController::class, 'update'])
+        ->name('cart.update');
+
+    Route::delete('/keranjang/{product}', [CartController::class, 'destroy'])
+        ->name('cart.destroy');
+});
 
 /*
 |--------------------------------------------------------------------------
