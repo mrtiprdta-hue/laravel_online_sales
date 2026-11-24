@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CustomerOrderController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\StockController;
@@ -58,7 +60,11 @@ Route::post('/logout', [AuthController::class, 'logout'])
 
 Route::middleware(['auth', 'role:customer'])->group(function () {
 
-    // M5 - Keranjang
+    /*
+    |--------------------------------------------------------------------------
+    | M5 - Keranjang
+    |--------------------------------------------------------------------------
+    */
 
     Route::get('/keranjang', [CartController::class, 'index'])
         ->name('cart.index');
@@ -71,6 +77,30 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
 
     Route::delete('/keranjang/{product}', [CartController::class, 'destroy'])
         ->name('cart.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | M6 - Checkout
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/checkout', [CheckoutController::class, 'index'])
+        ->name('checkout.index');
+
+    Route::post('/checkout', [CheckoutController::class, 'store'])
+        ->name('checkout.store');
+
+    /*
+    |--------------------------------------------------------------------------
+    | M6 - Riwayat Pesanan
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/pesanan', [CustomerOrderController::class, 'index'])
+        ->name('orders.index');
+
+    Route::get('/pesanan/{order}', [CustomerOrderController::class, 'show'])
+        ->name('orders.show');
 });
 
 /*
@@ -86,7 +116,7 @@ Route::prefix('admin')
 
         Route::get('/', fn () =>
             view('placeholder', [
-                'title' => 'Dashboard Admin (sementara)'
+                'title' => 'Dashboard Admin (sementara)',
             ])
         )->name('dashboard');
 
