@@ -1,72 +1,48 @@
 <?php
-
-namespace App\Http\Controllers;
-
+namespace App\Http\Controllers\Api\V1;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\LoginRequest;
 use App\Models\User;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
-use Illuminate\View\View;
-
 class AuthController extends Controller
 {
-    public function showLogin(): View
-    {
-        return view('auth.login');
-    }
+ public function login(LoginRequest $request): JsonResponse
+ {
+ $user = User::where('email', $request->string('email'))->first();
 
-    public function login(Request $request): RedirectResponse
-    {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
-
-        if (! Auth::attempt($credentials)) {
-            return back()->withErrors(['email' => 'Email atau password tidak sesuai.'])->onlyInput('email');
-        }
-
-        $request->session()->regenerate();
-
-        return $request->user()->role === 'admin'
-            ? redirect()->route('admin.dashboard')
-            : redirect()->intended(route('shop.index'));
-    }
-
-    public function showRegister(): View
-    {
-        return view('auth.register');
-    }
-
-    public function register(Request $request): RedirectResponse
-    {
-        $data = $request->validate([
-            'name' => ['required', 'max:120'],
-            'email' => ['required', 'email', 'max:150', 'unique:users,email'],
-            'password' => ['required', 'confirmed', Password::min(8)],
-        ]);
-
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'role' => 'customer',
-        ]);
-
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return redirect()->route('shop.index');
-    }
-
-    public function logout(Request $request): RedirectResponse
-    {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('shop.index');
-    }
+ if (! $user || ! Hash::check($request->string('password'), $user->password)) {
+ return response()->json([
+ 'message' => 'Email atau password tidak valid.',
+ ], 422);
+ }
+ $abilities = $user->role === 'admin' ? ['admin'] : ['customer'];
+ $token = $user->createToken(
+ $request->string('device_name')->toString(),
+ $abilities
+ )->plainTextToken;
+ return response()->json([
+ 'message' => 'Login API berhasil.',
+ 'token_type' => 'Bearer',
+ 'access_token' => $token,
+ 'user' => [
+ 'id' => $user->id,
+ 'name' => $user->name,
+ 'email' => $user->email,
+ 'role' => $user->role,
+ ],
+ ]);
+ }
+ public function me(Request $request): JsonResponse
+ {
+ return response()->json(['data' => $request->user()]);
+ }
+ public function logout(Request $request): JsonResponse
+ {
+ $request->user()->currentAccessToken()?->delete();
+ return response()->json([
+ 'message' => 'Token aktif telah dicabut.',
+ ]);
+ }
 }
